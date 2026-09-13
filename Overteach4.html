@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OVERTEACH - Katalog & Rechnung</title>
+    <style>
+        :root {
+            --bg-dark: #080b11;
+            --panel-bg: #0f1522;
+            --accent-blue: #00a8ff;
+            --accent-cyan: #00d2d3;
+            --text-main: #f5f6fa;
+            --text-muted: #8c9baf;
+            --border-color: #1b263b;
+            --highlight-bg: rgba(0, 168, 255, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            padding: 20px;
+            padding-bottom: 120px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 35px 20px;
+            background: linear-gradient(135deg, #031428 0%, #080b11 100%);
+            border: 1px solid var(--accent-blue);
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 25px rgba(0, 168, 255, 0.25);
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: #fff;
+            text-shadow: 0 0 15px rgba(0, 168, 255, 0.8);
+        }
+
+        .header h1 span {
+            color: var(--accent-blue);
+        }
+
+        .header p {
+            color: var(--accent-cyan);
+            font-size: 1.1rem;
+            margin-top: 8px;
+            letter-spacing: 2px;
+            font-weight: 600;
+        }
+
+        .class-selector {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            background: var(--panel-bg);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .class-btn {
+            background: #141c2e;
+            color: var(--text-muted);
+            border: 2px solid var(--border-color);
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .class-btn:hover {
+            border-color: var(--accent-blue);
+            color: #fff;
+        }
+
+        .class-btn.active {
+            background: var(--accent-blue);
+            color: #fff;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 15px rgba(0, 168, 255, 0.5);
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .grid-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .category-card {
+            background: var(--panel-bg);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .category-title {
+            background: linear-gradient(90deg, var(--accent-blue) 0%, #004e92 100%);
+            color: white;
+            padding: 12px 20px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-header {
+            display: grid;
+            grid-template-columns: 40px 1fr 120px 120px;
+            padding: 10px 15px;
+            background: #0b101a;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .item-row {
+            display: grid;
+            grid-template-columns: 40px 1fr 120px 120px;
+            padding: 12px 15px;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+        }
+
+        .item-row.selected {
+            background: var(--highlight-bg);
+        }
+
+        .item-row input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent-blue);
+            cursor: pointer;
+        }
+
+        .price-col {
+            text-align: right;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+        }
+
+        .price-col.active-price {
+            color: #00d2d3;
+        }
+
+        .price-col.inactive-price {
+            color: #526173;
+            text-decoration: line-through;
+            opacity: 0.5;
+        }
+
+        .summary-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #090e17;
+            border-top: 2px solid var(--accent-blue);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .summary-info {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .summary-total {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .summary-total span {
+            color: var(--accent-cyan);
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-action {
+            background: #1b263b;
+            color: #fff;
+            border: 1px solid var(--border-color);
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .btn-action:hover {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        .btn-print {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        /* PRINT STYLES (Wird beim Drucken/PDF-Export aktiviert) */
+        @media print {
+            body {
+                background: #fff !important;
+                color: #000 !important;
+                padding: 0;
+            }
+
+            .header {
+                background: none !important;
+                border: none !important;
+                border-bottom: 2px solid #000 !important;
+                color: #000 !important;
+                box-shadow: none !important;
+            }
+
+            .header h1 {
+                color: #000 !important;
+                text-shadow: none !important;
+            }
+
+            .header h1 span {
+                color: #000 !important;
+            }
+
+            .header p {
+                color: #555 !important;
+            }
+
+            .class-selector, .summary-bar, .category-card:has(input:not(:checked)) {
+                display: none !important;
+            }
+
+            .grid-container {
+                display: block;
+            }
+
+            .category-card {
+                border: 1px solid #ccc !important;
+                margin-bottom: 20px;
+            }
+
+            .category-title {
+                background: #eee !important;
+                color: #000 !important;
+            }
+
+            .table-header {
+                background: #fafafa !important;
+                color: #333 !important;
+                grid-template-columns: 1fr 120px;
+            }
+
+            .table-header div:nth-child(1), .table-header div:nth-child(4) {
+                display: none;
+            }
+
+            .item-row {
+                display: none;
+                grid-template-columns: 1fr 120px;
+                color: #000 !important;
+            }
+
+            .item-row.selected {
+                display: grid !important;
+                background: transparent !important;
+            }
+
+            .item-row div:nth-child(1), .item-row div:nth-child(4) {
+                display: none;
+            }
+
+            .price-col.active-price {
+                color: #000 !important;
+            }
+
+            #print-summary {
+                display: block !important;
+                margin-top: 30px;
+                text-align: right;
+                font-size: 1.4rem;
+                font-weight: bold;
+                border-top: 2px solid #000;
+                padding-top: 10px;
+            }
+        }
+
+        #print-summary {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>OVERTEACH<h1></h1>
+        <p>TUNING • PERFORMANCE • WERKSTATT</p>
+    </div>
+
+    <div class="class-selector">
+        <button class="class-btn active" id="btn-mittel" onclick="setClass('mittel')">Mittelklasse</button>
+        <button class="class-btn" id="btn-import" onclick="setClass('import')">Import + 500K+</button>
+    </div>
+
+    <div class="grid-container">
+        <div class="category-card">
+            <div class="category-title">
+                <span>Lackierungen & Performance</span>
+            </div>
+            <div class="table-header">
+                <div></div>
+                <div>Teil / Leistung</div>
+                <div style="text-align: right;">Mittelklasse</div>
+                <div style="text-align: right;">Import+500K+</div>
+            </div>
+            <div id="table-lackierungen"></div>
+        </div>
+
+        <div class="category-card">
+            <div class="category-title">
+                <span>Anbauteile & Optik</span>
+            </div>
+            <div class="table-header">
+                <div></div>
+                <div>Teil / Leistung</div>
+                <div style="text-align: right;">Mittelklasse</div>
+                <div style="text-align: right;">Import+500K+</div>
+            </div>
+            <div id="table-anbauteile"></div>
+        </div>
+    </div>
+
+    <div id="print-summary">
+        Gesamtsumme: <span id="print-total">0,00 €</span>
+    </div>
+
+    <div class="summary-bar">
+        <div class="summary-info">
+            <div class="summary-count"><span id="selected-count">0</span> Teile ausgewählt</div>
+            <div class="summary-total">Gesamtsumme: <span id="total-price">0,00 €</span></div>
+        </div>
+        <div class="action-btns">
+            <button class="btn-action" onclick="resetAll()">Zurücksetzen</button>
+            <button class="btn-action btn-print" onclick="window.print()">Rechnung drucken / PDF</button>
+        </div>
+    </div>
+
+    <script>
+        const dataLackierungen = [
+            { name: "Primärfarbe", priceM: 800, priceI: 1000 },
+            { name: "Sekundärfarbe", priceM: 300, priceI: 500 },
+            { name: "Perlmuttfarbe", priceM: 300, priceI: 500 },
+            { name: "Innenraumfarbe", priceM: 100, priceI: 300 },
+            { name: "Armaturenfarbe", priceM: 100, priceI: 300 },
+            { name: "Folierungen", priceM: 800, priceI: 1000 },
+            { name: "Motor I", priceM: 1000, priceI: 1000 },
+            { name: "Motor II", priceM: 1500, priceI: 2000 },
+            { name: "Motor III", priceM: 2500, priceI: 3000 },
+            { name: "Motor IV", priceM: 3500, priceI: 4000 },
+            { name: "Bremsen I", priceM: 200, priceI: 500 },
+            { name: "Bremsen II", priceM: 500, priceI: 1000 },
+            { name: "Bremsen III", priceM: 1000, priceI: 1500 },
+            { name: "Panzerung 20%", priceM: 300, priceI: 1000 },
+            { name: "Panzerung 40%", priceM: 800, priceI: 1400 },
+            { name: "Panzerung 60%", priceM: 1100, priceI: 1600 },
+            { name: "Panzerung 80%", priceM: 1500, priceI: 2200 },
+            { name: "Panzerung 100%", priceM: 1800, priceI: 2500 },
+            { name: "Getriebe I", priceM: 500, priceI: 900 },
+            { name: "Getriebe II", priceM: 800, priceI: 1300 },
+            { name: "Getriebe III", priceM: 1000, priceI: 1500 },
+            { name: "Fahrwerk I", priceM: 100, priceI: 200 },
+            { name: "Fahrwerk II", priceM: 200, priceI: 400 },
+            { name: "Fahrwerk III", priceM: 400, priceI: 800 },
+            { name: "Fahrwerk IV", priceM: 700, priceI: 1000 },
+            { name: "Turbo", priceM: 2500, priceI: 3000 }
+        ];
+
+        const dataAnbauteile = [
+            { name: "Scheibentönung 10%", priceM: 50, priceI: 100 },
+            { name: "Scheibentönung 50%", priceM: 100, priceI: 200 },
+            { name: "Scheibentönung 60%", priceM: 200, priceI: 300 },
+            { name: "Scheibentönung 80%", priceM: 300, priceI: 400 },
+            { name: "Scheibentönung 100%", priceM: 400, priceI: 500 },
+            { name: "Xenon Lichter", priceM: 500, priceI: 1000 },
+            { name: "Xenon Farbe", priceM: 100, priceI: 500 },
+            { name: "Hupe", priceM: 1000, priceI: 1500 },
+            { name: "Neon-Seite", priceM: 100, priceI: 200 },
+            { name: "Neon-Heck", priceM: 100, priceI: 200 },
+            { name: "Neon-Front", priceM: 100, priceI: 200 },
+            { name: "Neon-Front-Heck", priceM: 200, priceI: 400 },
+            { name: "Neon-Front-Seiten", priceM: 200, priceI: 400 },
+            { name: "Neon-Seiten-Heck", priceM: 200, priceI: 400 },
+            { name: "Alle 4 Neons", priceM: 1000, priceI: 1400 },
+            { name: "Neon-Farbe", priceM: 300, priceI: 500 },
+            { name: "Felgentyp", priceM: 1000, priceI: 1200 },
+            { name: "Felgenfarbe", priceM: 300, priceI: 500 },
+            { name: "Reifendesign", priceM: 300, priceI: 500 },
+            { name: "Reifen Verbesserung", priceM: 800, priceI: 1000 },
+            { name: "Reifenrauch", priceM: 800, priceI: 1000 },
+            { name: "Sturz", priceM: 300, priceI: 500 },
+            { name: "Spurverbreiterung", priceM: 300, priceI: 500 },
+            { name: "Fulltuning Motor", priceM: 10500, priceI: 13500 }
+        ];
+
+        let currentClass = 'mittel';
+
+        function formatCurrency(val) {
+            return val.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+        }
+
+        function setClass(cls) {
+            currentClass = cls;
+            document.getElementById('btn-mittel').classList.toggle('active', cls === 'mittel');
+            document.getElementById('btn-import').classList.toggle('active', cls === 'import');
+            renderTables();
+            calculateTotal();
+        }
+
+        function createRow(item, index, prefix) {
+            const rowId = `${prefix}-${index}`;
+            return `
+                <div class="item-row" id="row-${rowId}" onclick="toggleRow('${rowId}')">
+                    <div>
+                        <input type="checkbox" id="chk-${rowId}" onchange="calculateTotal()" onclick="event.stopPropagation()">
+                    </div>
+                    <div class="item-name">${item.name}</div>
+                    <div class="price-col ${currentClass === 'mittel' ? 'active-price' : 'inactive-price'}">${formatCurrency(item.priceM)}</div>
+                    <div class="price-col ${currentClass === 'import' ? 'active-price' : 'inactive-price'}">${formatCurrency(item.priceI)}</div>
+                </div>
+            `;
+        }
+
+        function renderTables() {
+            const checkedStates = {};
+            document.querySelectorAll('input[type="checkbox"]').forEach(chk => {
+                checkedStates[chk.id] = chk.checked;
+            });
+
+            document.getElementById('table-lackierungen').innerHTML = dataLackierungen.map((item, idx) => createRow(item, idx, 'lack')).join('');
+            document.getElementById('table-anbauteile').innerHTML = dataAnbauteile.map((item, idx) => createRow(item, idx, 'anbau')).join('');
+
+            Object.keys(checkedStates).forEach(id => {
+                const chk = document.getElementById(id);
+                if (chk) {
+                    chk.checked = checkedStates[id];
+                    const rowId = id.replace('chk-', '');
+                    const row = document.getElementById(`row-${rowId}`);
+                    if (row) row.classList.toggle('selected', chk.checked);
+                }
+            });
+        }
+
+        function toggleRow(rowId) {
+            const chk = document.getElementById(`chk-${rowId}`);
+            chk.checked = !chk.checked;
+            const row = document.getElementById(`row-${rowId}`);
+            if (row) row.classList.toggle('selected', chk.checked);
+            calculateTotal();
+        }
+
+        function calculateTotal() {
+            let total = 0;
+            let count = 0;
+
+            const processList = (data, prefix) => {
+                data.forEach((item, idx) => {
+                    const chk = document.getElementById(`chk-${prefix}-${idx}`);
+                    const row = document.getElementById(`row-${prefix}-${idx}`);
+                    if (chk && chk.checked) {
+                        count++;
+                        total += currentClass === 'mittel' ? item.priceM : item.priceI;
+                        if (row) row.classList.add('selected');
+                    } else if (row) {
+                        row.classList.remove('selected');
+                    }
+                });
+            };
+
+            processList(dataLackierungen, 'lack');
+            processList(dataAnbauteile, 'anbau');
+
+            const formattedTotal = formatCurrency(total);
+            document.getElementById('total-price').innerText = formattedTotal;
+            document.getElementById('print-total').innerText = formattedTotal;
+            document.getElementById('selected-count').innerText = count;
+        }
+
+        function resetAll() {
+            document.querySelectorAll('input[type="checkbox"]').forEach(chk => chk.checked = false);
+            document.querySelectorAll('.item-row').forEach(row => row.classList.remove('selected'));
+            calculateTotal();
+        }
+
+        renderTables();
+    </script>
+</body>
+</html>
