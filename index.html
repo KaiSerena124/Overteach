@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OVERTEACH - Katalog & Rechnung</title>
+    <title>OVERTECH - Katalog & Rechnung</title>
     <style>
         :root {
             --bg-dark: #080b11;
@@ -46,10 +46,6 @@
             letter-spacing: 3px;
             color: #fff;
             text-shadow: 0 0 15px rgba(0, 168, 255, 0.8);
-        }
-
-        .header h1 span {
-            color: var(--accent-blue);
         }
 
         .header p {
@@ -187,16 +183,59 @@
             justify-content: space-between;
             align-items: center;
             z-index: 1000;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
         .summary-info {
             display: flex;
-            gap: 30px;
+            gap: 25px;
             align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .discount-selector {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #141c2e;
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            flex-wrap: wrap;
+        }
+
+        .discount-selector span {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: bold;
+        }
+
+        .btn-discount {
+            background: #0b101a;
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            padding: 6px 10px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-discount:hover {
+            color: #fff;
+            border-color: var(--accent-cyan);
+        }
+
+        .btn-discount.active {
+            background: var(--accent-cyan);
+            color: #000;
+            border-color: var(--accent-cyan);
         }
 
         .summary-total {
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             font-weight: bold;
             color: #fff;
         }
@@ -204,6 +243,12 @@
         .summary-total span {
             color: var(--accent-cyan);
             font-family: 'Courier New', Courier, monospace;
+        }
+
+        .discount-info {
+            font-size: 0.85rem;
+            color: var(--accent-cyan);
+            display: block;
         }
 
         .action-btns {
@@ -232,7 +277,6 @@
             border-color: var(--accent-blue);
         }
 
-        /* PRINT STYLES (Wird beim Drucken/PDF-Export aktiviert) */
         @media print {
             body {
                 background: #fff !important;
@@ -251,10 +295,6 @@
             .header h1 {
                 color: #000 !important;
                 text-shadow: none !important;
-            }
-
-            .header h1 span {
-                color: #000 !important;
             }
 
             .header p {
@@ -327,7 +367,7 @@
 <body>
 
     <div class="header">
-        <h1>OVERTEACH<h1></h1>
+        <h1>OVERTECH</h1>
         <p>TUNING • PERFORMANCE • WERKSTATT</p>
     </div>
 
@@ -365,14 +405,30 @@
     </div>
 
     <div id="print-summary">
-        Gesamtsumme: <span id="print-total">0,00 €</span>
+        <div>Gesamtsumme: <span id="print-total">0,00 €</span></div>
+        <div id="print-discount-line" style="font-size: 1rem; color: #555;"></div>
     </div>
 
     <div class="summary-bar">
         <div class="summary-info">
             <div class="summary-count"><span id="selected-count">0</span> Teile ausgewählt</div>
-            <div class="summary-total">Gesamtsumme: <span id="total-price">0,00 €</span></div>
+            
+            <div class="discount-selector">
+                <span>Rabatt:</span>
+                <button class="btn-discount active" id="disc-0" onclick="setDiscount(0)">0%</button>
+                <button class="btn-discount" id="disc-10" onclick="setDiscount(10)">10%</button>
+                <button class="btn-discount" id="disc-20" onclick="setDiscount(20)">20%</button>
+                <button class="btn-discount" id="disc-30" onclick="setDiscount(30)">30%</button>
+                <button class="btn-discount" id="disc-50" onclick="setDiscount(50)">50%</button>
+                <button class="btn-discount" id="disc-75" onclick="setDiscount(75)">75%</button>
+            </div>
+
+            <div class="summary-total">
+                Endsumme: <span id="total-price">0,00 €</span>
+                <small class="discount-info" id="discount-saved-info"></small>
+            </div>
         </div>
+
         <div class="action-btns">
             <button class="btn-action" onclick="resetAll()">Zurücksetzen</button>
             <button class="btn-action btn-print" onclick="window.print()">Rechnung drucken / PDF</button>
@@ -437,6 +493,7 @@
         ];
 
         let currentClass = 'mittel';
+        let currentDiscount = 0;
 
         function formatCurrency(val) {
             return val.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
@@ -447,6 +504,16 @@
             document.getElementById('btn-mittel').classList.toggle('active', cls === 'mittel');
             document.getElementById('btn-import').classList.toggle('active', cls === 'import');
             renderTables();
+            calculateTotal();
+        }
+
+        function setDiscount(percent) {
+            currentDiscount = percent;
+            const discountSteps = [0, 10, 20, 30, 50, 75];
+            discountSteps.forEach(p => {
+                const btn = document.getElementById(`disc-${p}`);
+                if (btn) btn.classList.toggle('active', percent === p);
+            });
             calculateTotal();
         }
 
@@ -493,7 +560,7 @@
         }
 
         function calculateTotal() {
-            let total = 0;
+            let baseTotal = 0;
             let count = 0;
 
             const processList = (data, prefix) => {
@@ -502,7 +569,7 @@
                     const row = document.getElementById(`row-${prefix}-${idx}`);
                     if (chk && chk.checked) {
                         count++;
-                        total += currentClass === 'mittel' ? item.priceM : item.priceI;
+                        baseTotal += currentClass === 'mittel' ? item.priceM : item.priceI;
                         if (row) row.classList.add('selected');
                     } else if (row) {
                         row.classList.remove('selected');
@@ -513,15 +580,30 @@
             processList(dataLackierungen, 'lack');
             processList(dataAnbauteile, 'anbau');
 
-            const formattedTotal = formatCurrency(total);
-            document.getElementById('total-price').innerText = formattedTotal;
-            document.getElementById('print-total').innerText = formattedTotal;
+            const savedAmount = baseTotal * (currentDiscount / 100);
+            const finalTotal = baseTotal - savedAmount;
+
+            const formattedFinal = formatCurrency(finalTotal);
+            document.getElementById('total-price').innerText = formattedFinal;
+            document.getElementById('print-total').innerText = formattedFinal;
             document.getElementById('selected-count').innerText = count;
+
+            const discountInfoEl = document.getElementById('discount-saved-info');
+            const printDiscountEl = document.getElementById('print-discount-line');
+
+            if (currentDiscount > 0 && baseTotal > 0) {
+                discountInfoEl.innerText = `(${currentDiscount}% Rabatt gewährt - Ersparnis: ${formatCurrency(savedAmount)})`;
+                printDiscountEl.innerText = `Inkl. ${currentDiscount}% Rabatt (Ersparnis: ${formatCurrency(savedAmount)})`;
+            } else {
+                discountInfoEl.innerText = '';
+                printDiscountEl.innerText = '';
+            }
         }
 
         function resetAll() {
             document.querySelectorAll('input[type="checkbox"]').forEach(chk => chk.checked = false);
             document.querySelectorAll('.item-row').forEach(row => row.classList.remove('selected'));
+            setDiscount(0);
             calculateTotal();
         }
 
